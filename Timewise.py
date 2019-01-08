@@ -25,6 +25,12 @@ class Time:
         self.length = length
         self.end = start + length
         self.weeks = weeks
+    def __key(self):
+        return (self.days,self.start,self.length,self.weeks)
+    def __hash__(self):
+        return hash(self.__key())
+    def __eq__(self,other):
+        return isinstance(self, type(other)) and self.__key() == other.__key()
 
 class Room:
     '''
@@ -57,6 +63,13 @@ class Room:
                 elif start < time.start and end > time.end:
                     return False
         return True
+    def __key(self):
+        return self.room_id
+    def __hash__(self):
+        return hash(self.__key())
+    def __eq__(self,other):
+        return isinstance(self, type(other)) and self.__key() == other.__key()
+
 
 class Class:
     '''
@@ -102,6 +115,13 @@ class Class:
                 else:
                     room_times.append(RoomTime(room[0],time[0],room[1]+time[1]))
         return room_times
+    def __key(self):
+        return class_id
+    def __hash__(self):
+        return hash(self.__key())
+    def __eq__(self,other):
+        return isinstance(self, type(other)) and self.__key() == other.__key()
+
 
 class RoomTime:
     '''
@@ -114,7 +134,13 @@ class RoomTime:
         self.room = room
         self.time = time
         self.penalty = penalty
-        
+    def __key(self):
+        return (self.room.room_id,self.time.days,self.time.start,self.time.length,self.time.weeks)
+    def __hash__(self):
+        return hash(self.__key())
+    def __eq__(self,other):
+        return isinstance(self, type(other)) and self.__key() == other.__key()
+
 #newfile = open("timewise-lums-sum17.csv","w")
 #newfile.write("ID,Cap,Days,Start,Length,Weeks\n")
 
