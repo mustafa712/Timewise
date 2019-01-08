@@ -53,3 +53,28 @@ for courses in root.iter('courses'):
                 print(course.attrib)
             i += 1
 
+def isClashing(time1,time2):
+    """
+    Input:
+        time1(Time): Time object containing days, weeks, start and length data
+        time2(Time): Time object containing days, weeks, start and length data
+        
+    Output:
+        Bool: True, if the two times clash at any day of the week
+    """
+    for weekIndex in range(len(time1.weeks)):
+        if time1.weeks[weekIndex] == time2.weeks[weekIndex]:
+            for dayIndex in range(len(time1.days)):
+                if time1.days[dayIndex] == time2.days[dayIndex]:
+                    if time1.start < time2.start:
+                        if time1.end > time2.start: return True
+                    else:
+                        if time2.end > time1.start: return True
+    return time1.start == time2.start
+ 
+    
+                        
+                    
+                    
+
+
