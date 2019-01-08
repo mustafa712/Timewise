@@ -4,7 +4,6 @@ import pandas as pd
 tree = ET.parse("Test_datasets\lums-sum17.xml")
 
 root = tree.getroot()
-print(root)
 NAME = root.attrib['name']
 DAYS = int(root.attrib['nrDays'])
 SLOTS = int(root.attrib['slotsPerDay'])
@@ -46,6 +45,7 @@ class Class:
         #self.times = times
         self.room_penalty = room_penalty
         self.time_penalty = time_penalty
+        self.roomTimeAssign = None
         #self.RoomTime = RoomTime
     def getValidRoomTime(self):
         room_times = []
@@ -85,7 +85,7 @@ for rooms in root.iter('rooms'):
             unavailable = []
         else:
             for unava in room.iter('unavailable'):
-                unavailable.append(Time([unava.attrib['days'], int(unava.attrib['start']), int(unava.attrib['length']), unava.attrib['weeks']]))
+                unavailable.append(Time(unava.attrib['days'], int(unava.attrib['start']), int(unava.attrib['length']), unava.attrib['weeks']))
                 #newfile.write(room_id +","+capacity+",'" + unava.attrib['days'] +"," + unava.attrib['start']+","+ unava.attrib['length']+",'" + unava.attrib['weeks']+"\n")
         Rooms.append(Room(room_id,capacity,unavailable))
 
@@ -96,7 +96,8 @@ for courses in root.iter('courses'):
         for config in course.iter('config'):
             if i == 2:
                 print(course.attrib)
-            i += 1
+            i += 1 
+            
 
 def isClashing(time1,time2):
     """
@@ -116,7 +117,21 @@ def isClashing(time1,time2):
                     else:
                         if time2.end > time1.start: return True
     return time1.start == time2.start
- 
+
+def isGlobalClash(roomTime1,roomTime2):
+    """
+    Input:
+        roomTime1(RoomTime): Room Time object encodes room and time info
+        roomTime2(RoomTIme): Room Time object encodes room and time info
+    Output:
+        Bool: True, if the two times clash at any day of the week in same room
+        
+    """
+    if roomTime1.room == roomTime2.room:
+        return isClashing(roomTime1.time,roomTime2.time)
+    return False
+
+        
     
                         
                     
