@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 #import pandas as pd
 
-tree = ET.parse("Test_datasets\lums-sum17.xml")
+tree = ET.parse("Early_datasets/agh-fis-spr17.xml")
 
 root = tree.getroot()
 #print(root)
@@ -106,7 +106,7 @@ class Class:
                     if time[0].weeks[week] == '1':
                         for day in range(DAYS):
                             if time[0].days[day] == '1':
-                                if not room[0].isAvailable(day,week,time.start,time.end):
+                                if not room[0].isAvailable(day,week,time[0].start,time[0].end):
                                     #valid = False
                                     break
                         else:
@@ -144,38 +144,43 @@ class RoomTime:
 #newfile = open("timewise-lums-sum17.csv","w")
 #newfile.write("ID,Cap,Days,Start,Length,Weeks\n")
 
-Rooms = {}
-for rooms in root.iter('rooms'):
-    for room in rooms.iter('room'):
-        room_id = int(room.attrib['id'])
-        capacity = int(room.attrib['capacity'])
-        unavailable = []
-        if room.find('unavailable') == None:
+def getAllRooms():
+    Rooms = {}
+    for rooms in root.iter('rooms'):
+        for room in rooms.iter('room'):
+            room_id = int(room.attrib['id'])
+            capacity = int(room.attrib['capacity'])
             unavailable = []
-        else:
-            for unava in room.iter('unavailable'):
-                unavailable.append(Time(unava.attrib['days'], int(unava.attrib['start']), int(unava.attrib['length']), unava.attrib['weeks']))
-                #newfile.write(room_id +","+capacity+",'" + unava.attrib['days'] +"," + unava.attrib['start']+","+ unava.attrib['length']+",'" + unava.attrib['weeks']+"\n")
-        Rooms[room_id] = Room(room_id,capacity,unavailable)
+            if room.find('unavailable') == None:
+                unavailable = []
+            else:
+                for unava in room.iter('unavailable'):
+                    unavailable.append(Time(unava.attrib['days'], int(unava.attrib['start']), int(unava.attrib['length']), unava.attrib['weeks']))
+                    #newfile.write(room_id +","+capacity+",'" + unava.attrib['days'] +"," + unava.attrib['start']+","+ unava.attrib['length']+",'" + unava.attrib['weeks']+"\n")
+            Rooms[room_id] = Room(room_id,capacity,unavailable)
+    return Rooms
 
 #newfile.close()
-classes = {}
-for courses in root.iter('courses'):
-    for course in courses.iter('course'):
-        course_id = int(course.attrib['id'])
-        for config in course.iter('config'):
-            config_id = int(config.attrib['id'])
-            for subpart in config.iter('subpart'):
-                subpart_id = int(subpart.attrib['id'])
-                for clss in subpart.iter('class'):
-                    class_id = int(clss.attrib['id'])
-                    room_penalty = []
-                    time_penalty = []
-                    for room in clss.iter('room'):
-                        room_penalty.append([Rooms[int(room.attrib['id'])],int(room.attrib['penalty'])])
-                    for time in clss.iter('time'):
-                        time_penalty.append([Time(time.attrib['days'], int(time.attrib['start']), int(time.attrib['length']), time.attrib['weeks']), int(time.attrib['penalty'])])
-                    classes[class_id] = Class(course_id,config_id,subpart_id,class_id, int(clss.attrib['limit']))
+def getAllClasses():
+    classes = {}
+    Rooms = getAllRooms()
+    for courses in root.iter('courses'):
+        for course in courses.iter('course'):
+            course_id = int(course.attrib['id'])
+            for config in course.iter('config'):
+                config_id = int(config.attrib['id'])
+                for subpart in config.iter('subpart'):
+                    subpart_id = int(subpart.attrib['id'])
+                    for clss in subpart.iter('class'):
+                        class_id = int(clss.attrib['id'])
+                        room_penalty = []
+                        time_penalty = []
+                        for room in clss.iter('room'):
+                            room_penalty.append([Rooms[int(room.attrib['id'])],int(room.attrib['penalty'])])
+                        for time in clss.iter('time'):
+                            time_penalty.append([Time(time.attrib['days'], int(time.attrib['start']), int(time.attrib['length']), time.attrib['weeks']), int(time.attrib['penalty'])])
+                        classes[class_id] = Class(course_id,config_id,subpart_id,class_id, int(clss.attrib['limit']),room_penalty,time_penalty)
+    return classes
 
 def isClashing(time1,time2):
     """
