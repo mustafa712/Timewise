@@ -4,7 +4,9 @@ import xml.etree.ElementTree as ET
 tree = ET.parse("Early_datasets/agh-fis-spr17.xml")
 
 root = tree.getroot()
+
 #print(root)
+
 NAME = root.attrib['name']
 DAYS = int(root.attrib['nrDays'])
 SLOTS = int(root.attrib['slotsPerDay'])
@@ -95,7 +97,11 @@ class Class:
         #self.times = times
         self.room_penalty = room_penalty
         self.time_penalty = time_penalty
+
+        self.roomTimeAssign = None
+
         self.ValidRoomTime = self.getValidRoomTime()
+
         #self.RoomTime = RoomTime
     def getValidRoomTime(self):
         room_times = []
@@ -161,6 +167,7 @@ def getAllRooms():
     return Rooms
 
 #newfile.close()
+
 def getAllClasses():
     classes = {}
     Rooms = getAllRooms()
@@ -182,6 +189,30 @@ def getAllClasses():
                         classes[class_id] = Class(course_id,config_id,subpart_id,class_id, int(clss.attrib['limit']),room_penalty,time_penalty)
     return classes
 
+#classes = {}
+#for courses in root.iter('courses'):
+    #for course in courses.iter('course'):
+        #course_id = int(course.attrib['id'])
+        #for config in course.iter('config'):
+
+            #if i == 2:
+                #print(course.attrib)
+            #i += 1 
+            
+
+            #config_id = int(config.attrib['id'])
+            #for subpart in config.iter('subpart'):
+                #subpart_id = int(subpart.attrib['id'])
+                #for clss in subpart.iter('class'):
+                    #class_id = int(clss.attrib['id'])
+                    #room_penalty = []
+                    #time_penalty = []
+                    #for room in clss.iter('room'):
+                        #room_penalty.append([Rooms[int(room.attrib['id'])],int(room.attrib['penalty'])])
+                    #for time in clss.iter('time'):
+                        #time_penalty.append([Time(time.attrib['days'], int(time.attrib['start']), int(time.attrib['length']), time.attrib['weeks']), int(time.attrib['penalty'])])
+                    #classes[class_id] = Class(course_id,config_id,subpart_id,class_id, int(clss.attrib['limit']))
+
 def isClashing(time1,time2):
     """
     Input:
@@ -200,3 +231,17 @@ def isClashing(time1,time2):
                     else:
                         if time2.end > time1.start: return True
     return time1.start == time2.start
+
+
+def isGlobalClash(roomTime1,roomTime2):
+    """
+    Input:
+        roomTime1(RoomTime): Room Time object encodes room and time info
+        roomTime2(RoomTIme): Room Time object encodes room and time info
+    Output:
+        Bool: True, if the two times clash at any day of the week in same room
+        
+    """
+    if roomTime1.room == roomTime2.room:
+        return isClashing(roomTime1.time,roomTime2.time)
+    return False
