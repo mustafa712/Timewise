@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 #import pandas as pd
 
-tree = ET.parse("Early_datasets/agh-fis-spr17.xml")
+tree = ET.parse("Test_datasets/lums-sum17.xml")
 
 root = tree.getroot()
 
@@ -21,14 +21,15 @@ class Time:
         end - integer representing the end of slot
         weeks - string of 0s and 1s of length WEEKS
     '''
-    def __init__(self,days,start,length,weeks):
-        self.days = days
-        self.start = start
-        self.length = length
-        self.end = start + length
-        self.weeks = weeks
+    def __init__(self,unique_key,days,start,length,weeks):
+		self.unique_key = unique_key
+		self.days = days
+		self.start = start
+		self.length = length
+		self.end = start + length
+		self.weeks = weeks
     def __key(self):
-        return (self.days,self.start,self.length,self.weeks)
+        return (self.unique_key)
     def __hash__(self):
         return hash(self.__key())
     def __eq__(self,other):
@@ -104,7 +105,7 @@ class Class:
 
         #self.RoomTime = RoomTime
     def getValidRoomTime(self):
-        room_times = []
+        room_times = {}
         for room in self.room_penalty:
             for time in self.time_penalty:
                 #valid = True
@@ -119,7 +120,7 @@ class Class:
                             continue
                         break
                 else:
-                    room_times.append(RoomTime(room[0],time[0],room[1]+time[1]))
+                    room_times[str(room[0].room_id) + time[0].unique_key] = RoomTime(str(room[0].room_id) + time[0].unique_key,room[0],time[0],room[1]+time[1])
         return room_times
     def __key(self):
         return class_id
@@ -128,7 +129,6 @@ class Class:
     def __eq__(self,other):
         return isinstance(self, type(other)) and self.__key() == other.__key()
 
-
 class RoomTime:
     '''
     Variables:
@@ -136,16 +136,19 @@ class RoomTime:
         time - object of type Time
         penalty - total penalty of the room time combination
     '''
-    def __init__(self,room,time,penalty):
+    def __init__(self,u_key,room,time,penalty):
+        self.u_key = u_key
         self.room = room
         self.time = time
         self.penalty = penalty
     def __key(self):
-        return (self.room.room_id,self.time.days,self.time.start,self.time.length,self.time.weeks)
+        return (self.u_key)
     def __hash__(self):
         return hash(self.__key())
     def __eq__(self,other):
         return isinstance(self, type(other)) and self.__key() == other.__key()
+    def __str__(self):
+	return str(self.room.room_id) + "_" + self.time.unique_key
 
 #newfile = open("timewise-lums-sum17.csv","w")
 #newfile.write("ID,Cap,Days,Start,Length,Weeks\n")
@@ -160,8 +163,10 @@ def getAllRooms():
             if room.find('unavailable') == None:
                 unavailable = []
             else:
-                for unava in room.iter('unavailable'):
-                    unavailable.append(Time(unava.attrib['days'], int(unava.attrib['start']), int(unava.attrib['length']), unava.attrib['weeks']))
+		i = 1
+		for unava in room.iter('unavailable'):
+		    unavailable.append(Time("R_" + str(room_id) + "_" + str(i), unava.attrib['days'], int(unava.attrib['start']), int(unava.attrib['length']), unava.attrib['weeks']))
+		    i += 1
                     #newfile.write(room_id +","+capacity+",'" + unava.attrib['days'] +"," + unava.attrib['start']+","+ unava.attrib['length']+",'" + unava.attrib['weeks']+"\n")
             Rooms[room_id] = Room(room_id,capacity,unavailable)
     return Rooms
@@ -184,9 +189,13 @@ def getAllClasses():
                         time_penalty = []
                         for room in clss.iter('room'):
                             room_penalty.append([Rooms[int(room.attrib['id'])],int(room.attrib['penalty'])])
-                        for time in clss.iter('time'):
-                            time_penalty.append([Time(time.attrib['days'], int(time.attrib['start']), int(time.attrib['length']), time.attrib['weeks']), int(time.attrib['penalty'])])
+		        i = 1
+			for time in clss.iter('time'):
+			    time_penalty.append([Time("C_" + str(class_id) + "_" + str(i), time.attrib['days'], int(time.attrib['start']), int(time.attrib['length']), time.attrib['weeks']), int(time.attrib['penalty'])])
+			    i += 1
                         classes[class_id] = Class(course_id,config_id,subpart_id,class_id, int(clss.attrib['limit']),room_penalty,time_penalty)
+                        #if class_id == 1:
+                            #tempRT1 = classes[class_id].ValidRoomTime
     return classes
 
 #classes = {}
@@ -220,6 +229,7 @@ def isClashing(time1,time2):
         time2(Time): Time object containing days, weeks, start and length data
         
     Output:
+
         Bool: True, if the two times clash at any day of the week
     """
     for weekIndex in range(len(time1.weeks)):
@@ -232,6 +242,8 @@ def isClashing(time1,time2):
                         if time2.end > time1.start: return True
     return time1.start == time2.start
 
+#tempRoomTime1 = RoomTime('61C_1_17',getAllRooms()[61],getAllClasses()[1].time_penalty
+#tempRoomTIme2 = 
 
 def isGlobalClash(roomTime1,roomTime2):
     """
